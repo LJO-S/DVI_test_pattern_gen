@@ -16,20 +16,97 @@ entity TMDS_encoder is
 end entity TMDS_encoder;
 
 architecture rtl of TMDS_encoder is
-    signal r_no_ones  : unsigned(3 downto 0)         := (others => '0');
-    signal r_XOR_XNOR : std_logic                    := '0';
-    signal q_m        : std_logic_vector(8 downto 0) := (others => '0');
-begin
-    -- 1. Need to check how many ones we have in video_data:
-    -- 2. Need to check DC bias
-    -- 3. Encode
-    
-    --for i in 0 to 7 loop
-    --    r_no_ones <= r_no_ones + unsigned(i_video_data(i));
-    --end loop;
+    signal w_XOR              : std_logic                    := '0';
+    signal w_qm               : std_logic_vector(8 downto 0) := (others => '0');
+    signal w_invert_qm        : std_logic                    := '0';
+    signal w_balance          : signed(3 downto 0)           := (others => '0');
+    signal w_balance_sign_eq  : std_logic                    := '0';
+    signal w_balance_acc      : unsigned(3 downto 0)         := (others => '0');
+    signal w_balance_acc_incr : unsigned(3 downto 0)         := (others => '0');
+    signal w_balance_acc_new  : unsigned(3 downto 0)         := (others => '0');
+    signal r_cntr             : integer range -8 to 8        := 0;
 
-    wire [3 : 0] Nb1s = VD[0] + VD[1] + VD[2] + VD[3] + VD[4] + VD[5] + VD[6] + VD[7];
-    wire xnor = (Nb1s > 4'd4) | | (Nb1s == 4'd4 & & VD[0] == 1'b0);
-    wire [8 : 0] q_m = {~xnor, q_m[6 : 0] ^ VD[7 : 1] ^ {7{xnor}}, VD[0]};
+begin
+    --------------------------------------------------------------------
+    -- Combinatorial
+    -- 1. Need to check how many ones we have in video_data:
+    p_XOR_XNOR : process (all)
+        variable v_number_of_zeros : UNSIGNED(3 downto 0) := (others => '0');
+    begin
+        v_number_of_zeros := (others => '0');
+        for i in i_video_data'range loop
+            v_number_of_zeros := v_number_of_zeros + i_video_data(i);
+        end loop;
+        if (v_number_of_zeros < 4) or ((v_number_of_zeros = 4) and (i_video_data(0) = '1')) then
+            w_XOR <= '1'; -- XOR
+        else
+            w_XOR <= '0'; -- XNOR
+        end if;
+    end process p_XOR_XNOR;
+
+    -- 2. Encode
+    p_qm : process (all)
+    begin
+        if (w_XOR = '1') then
+            w_qm <= '1' & (w_qm(6 downto 0) xor i_video_data(7 downto 1)) & i_video_data(0);
+        else
+            w_qm <= '0' & (w_qm(6 downto 0) xnor i_video_data(7 downto 1)) & i_video_data(0);
+        end if;
+    end process p_qm;
+
+    -- 3. Need to check DC bias
+    p_DC_bias : process (all)
+        variable v_balance_zero : std_logic := '0';
+    begin
+        -----------------------
+        w_balance <= (others => '0') - to_signed(4, w_balance'length); -- 4 zeros, 4 ones
+        for i in w_qm'range loop
+            w_balance <= w_balance + w_qm(i); -- if r_balance == 0 it is balanced
+        end loop;
+        -----------------------
+        if (w_balance = 0) or (w_balance_acc = 0) then
+            w_invert_qm <= not w_qm(8);
+        else
+            w_invert_qm <= w_balance_sign_eq;
+        end if;
+        -----------------------
+        if (w_balance = 0) or (w_balance_acc = 0) then
+            v_balance_zero := '1';
+        else
+            v_balance_zero := '0';
+        end if;
+        -----------------------
+        if (w_invert_qm = '1') then
+            w_balance_acc_new <= w_balance_acc - w_balance_acc_incr;
+        else
+            w_balance_acc_new <= w_balance_acc + w_balance_acc_incr;
+        end if;
+        -----------------------
+    end process p_DC_bias;
+    w_balance_sign_eq <= w_balance(w_balance'high) and w_balance_acc(w_balance_acc'high); -- TODO might need extra bit for sign
+    w_balance_acc_incr <= w_balance - signed((w_qm(8) or not w_balance_sign_eq) and not v_balance_zero);
+
+    -- 4. Output (clocked)
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if (i_video_en = '1') then
+                o_TMDS <= TMDS_data;
+            else
+                case C1_C0 is
+                    when "00" =>
+
+                    when "01" =>
+
+                    when "10" =>
+
+                    when "11" =>
+
+                    when others =>
+                        null;
+                end case;
+            end if;
+        end if;
+    end process;
 
 end architecture;
