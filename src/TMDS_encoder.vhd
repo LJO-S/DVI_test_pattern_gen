@@ -2,6 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+-- https://mjseemjdo.com/2021/04/02/tutorial-6-hdmi-display-output/
+
 entity TMDS_encoder is
     port (
         clk   : in std_logic;
@@ -25,6 +27,7 @@ architecture rtl of TMDS_encoder is
     signal w_balance_acc_incr : unsigned(3 downto 0)         := (others => '0');
     signal w_balance_acc_new  : unsigned(3 downto 0)         := (others => '0');
     signal r_cntr             : integer range -8 to 8        := 0;
+    signal TMDS_data          : std_logic_vector(9 downto 0) := (others => '0');
 
 begin
     --------------------------------------------------------------------
@@ -60,8 +63,11 @@ begin
     begin
         -----------------------
         w_balance <= (others => '0') - to_signed(4, w_balance'length); -- 4 zeros, 4 ones
+        -- if balance == 0 it is balanced
+        --    balance == -4 no ones
+        --    balance == 4 no zeros
         for i in w_qm'range loop
-            w_balance <= w_balance + w_qm(i); -- if r_balance == 0 it is balanced
+            w_balance <= w_balance + w_qm(i);
         end loop;
         -----------------------
         if (w_balance = 0) or (w_balance_acc = 0) then
@@ -83,17 +89,19 @@ begin
         end if;
         -----------------------
     end process p_DC_bias;
-    w_balance_sign_eq <= w_balance(w_balance'high) and w_balance_acc(w_balance_acc'high); -- TODO might need extra bit for sign
+    w_balance_sign_eq  <= w_balance(w_balance'high) and w_balance_acc(w_balance_acc'high); -- TODO might need extra bit for sign
     w_balance_acc_incr <= w_balance - signed((w_qm(8) or not w_balance_sign_eq) and not v_balance_zero);
 
-    -- 4. Output (clocked)
-    process (clk)
-    begin
-        if rising_edge(clk) then
-            if (i_video_en = '1') then
-                o_TMDS <= TMDS_data;
-            else
-                case C1_C0 is
+    TMDS_data <= w_invert_qm & w_qm(8) & (w_qm(7 downto 0) and w_invert_qm);
+
+        -- 4. Output (clocked)
+        process (clk)
+        begin
+            if rising_edge(clk) then
+                if (i_video_en = '1') then
+                    o_TMDS <= TMDS_data;
+                else
+                    case C1_C0 is
                     when "00" =>
 
                     when "01" =>
@@ -103,10 +111,26 @@ begin
                     when "11" =>
 
                     when others =>
-                        null;
-                end case;
+                            null;
+    end case;
             end if;
-        end if;
-    end process;
+            end if;
+        end process;
+    else
+    case C1_C0 is
+            when  =>
+
+            when  =>
+
+            when  =>
+
+            when  =>
+
+            when others =>
+            null;
+            end case;
+    end if;
+end if;
+end process;
 
 end architecture;
