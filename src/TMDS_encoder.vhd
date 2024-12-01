@@ -20,11 +20,11 @@ architecture rtl of TMDS_encoder is
     signal w_XNOR             : std_logic                    := '0';
     signal w_qm               : std_logic_vector(8 downto 0) := (others => '0');
     signal w_invert_qm        : std_logic                    := '0';
-    signal w_balance          : signed(3 downto 0)           := (others => '0');
+    signal w_balance          : signed(4 downto 0)           := (others => '0');
     signal w_balance_sign_eq  : std_logic                    := '0';
-    signal w_balance_acc      : signed(3 downto 0)           := (others => '0');
-    signal w_balance_acc_incr : signed(3 downto 0)           := (others => '0');
-    signal w_balance_acc_new  : signed(3 downto 0)           := (others => '0');
+    signal w_balance_acc      : signed(4 downto 0)           := (others => '0');
+    signal w_balance_acc_incr : signed(4 downto 0)           := (others => '0');
+    signal w_balance_acc_new  : signed(4 downto 0)           := (others => '0');
     signal w_TMDS_data        : std_logic_vector(9 downto 0) := (others => '0');
     signal w_balance_zero     : std_logic                    := '0';
     signal w_C1_C0            : std_logic_vector(1 downto 0) := (others => '0');
@@ -59,10 +59,10 @@ begin
     --------------------------------------------------------------------
     -- 3. Need to check DC bias
     p_DC_bias : process (all)
-        variable v_balance : signed(3 downto 0) := (others => '0'); 
+        variable v_balance : signed(4 downto 0) := (others => '0'); 
     begin
         -----------------------
-        v_balance := (others => '0') - to_signed(4, w_balance'length); -- 4 zeros, 4 ones
+        v_balance := (others => '0') - to_signed(4, v_balance'length); -- 4 zeros, 4 ones
         -- if balance == 0 : balanced
         --    balance > 0  : more 1s
         --    balance < 0  : more 0s
@@ -72,7 +72,7 @@ begin
             --else
             --    v_balance := v_balance;
             --end if;
-            v_balance := w_balance + w_qm(i);
+            v_balance := v_balance + w_qm(i); -- todo not to sure about this
         end loop;
         w_balance <= v_balance;
         -----------------------
