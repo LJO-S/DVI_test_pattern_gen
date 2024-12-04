@@ -16,10 +16,10 @@ entity TMDS_encoder is
 end entity TMDS_encoder;
 
 architecture rtl of TMDS_encoder is
-    -- TODO check length of vectors
     signal w_XNOR             : std_logic                    := '0';
     signal w_qm               : std_logic_vector(8 downto 0) := (others => '0');
     signal w_invert_qm        : std_logic                    := '0';
+    signal w_invert_qm_vec    : std_logic_vector(7 downto 0) := (others => '0');
     signal w_balance          : signed(4 downto 0)           := (others => '0');
     signal w_balance_sign_eq  : std_logic                    := '0';
     signal w_balance_acc      : signed(4 downto 0)           := (others => '0');
@@ -62,7 +62,7 @@ begin
         variable v_balance : signed(4 downto 0) := (others => '0'); 
     begin
         -----------------------
-        v_balance := (others => '0') - to_signed(4, v_balance'length); -- 4 zeros, 4 ones
+        v_balance := "00000" - to_signed(4, v_balance'length); -- 4 zeros, 4 ones
         -- if balance == 0 : balanced
         --    balance > 0  : more 1s
         --    balance < 0  : more 0s
@@ -120,7 +120,8 @@ begin
     --      --> PSEUDO: q_out(0:7)  = w_qm(0:7)
     --      --> q_out(0:7) <= w_qm(0:7) XOR w_balance_sign;
     --
-    w_TMDS_data <= w_invert_qm & w_qm(8) & (w_qm(7 downto 0) xor (others => w_invert_qm));
+    w_invert_qm_vec <= (others => w_invert_qm);
+    w_TMDS_data <= w_invert_qm & w_qm(8) & (w_qm(7 downto 0) xor w_invert_qm_vec);
     --------------------------------------------------------------------
     -- 4. Output (clocked)
     p_output : process (clk)
