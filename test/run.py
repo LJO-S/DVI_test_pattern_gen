@@ -76,7 +76,7 @@ VU.add_compile_option("modelsim.vcom_flags",["+acc=npr", '+cover="sbcef','-check
 
 VU.set_sim_option("modelsim.vsim_flags.gui", ["-t 1ps", '-fsmdebug', "-voptargs=\"+acc\"", '-coverage', "-debugDB"])
 
-VU.set_sim_option("modelsim.init_file.gui", "my_wave_script.tcl")
+VU.set_sim_option("modelsim.init_file.gui", "add_waveforms.tcl")
 
  
 
