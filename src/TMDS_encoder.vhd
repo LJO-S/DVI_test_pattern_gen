@@ -9,6 +9,7 @@ entity TMDS_encoder is
         clk : in std_logic;
 
         i_video_en   : in std_logic;
+        i_CD         : in std_logic_vector(1 downto 0);
         i_video_data : in std_logic_vector(7 downto 0) := (others => '0');
 
         o_TMDS : out std_logic_vector(9 downto 0)
@@ -33,7 +34,7 @@ begin
     --------------------------------------------------------------------
     -- 1. Counting 1s
     p_XOR_XNOR : process (all)
-        variable v_number_of_ones  : unsigned(3 downto 0) := (others => '0');
+        variable v_number_of_ones : unsigned(3 downto 0) := (others => '0');
     begin
         v_number_of_ones := (others => '0');
         for i in i_video_data'range loop
@@ -59,23 +60,18 @@ begin
     --------------------------------------------------------------------
     -- 3. Need to check DC bias
     p_DC_bias : process (all)
-        variable v_balance : signed(4 downto 0) := (others => '0'); 
+        variable v_balance : signed(4 downto 0) := (others => '0');
     begin
-        -----------------------
+        ----------------------------------------------
         v_balance := "00000" - to_signed(4, v_balance'length); -- 4 zeros, 4 ones
         -- if balance == 0 : balanced
         --    balance > 0  : more 1s
         --    balance < 0  : more 0s
         for i in 0 to 7 loop
-            --if w_qm(i) = '1' then
-            --    v_balance := v_balance + 1;
-            --else
-            --    v_balance := v_balance;
-            --end if;
-            v_balance := v_balance + w_qm(i); -- todo not to sure about this
+            v_balance := v_balance + w_qm(i);
         end loop;
         w_balance <= v_balance;
-        -----------------------
+        ----------------------------------------------
         if (w_balance = 0) or (w_balance_acc = 0) then
             w_invert_qm    <= not w_qm(8);
             w_balance_zero <= '1';
@@ -83,7 +79,7 @@ begin
             w_invert_qm    <= w_balance_sign_eq;
             w_balance_zero <= '0';
         end if;
-        -----------------------
+        ----------------------------------------------
     end process p_DC_bias;
     --------------------------------------------------------------------
     -- if cnt(t-1) > 0 --> w_balance_acc > 0 --> w_balance_acc(4) = '0'
@@ -121,7 +117,7 @@ begin
     --      --> q_out(0:7) <= w_qm(0:7) XOR w_balance_sign;
     --
     w_invert_qm_vec <= (others => w_invert_qm);
-    w_TMDS_data <= w_invert_qm & w_qm(8) & (w_qm(7 downto 0) xor w_invert_qm_vec);
+    w_TMDS_data     <= w_invert_qm & w_qm(8) & (w_qm(7 downto 0) xor w_invert_qm_vec);
     --------------------------------------------------------------------
     -- 4. Output (clocked)
     p_output : process (clk)
@@ -134,6 +130,7 @@ begin
                 w_balance_acc <= w_balance_acc_new;
             else
                 w_balance_acc <= (others => '0');
+                w_C1_C0 <= i_CD;
                 case w_C1_C0 is
                     when "00" =>
                         o_TMDS <= "1101010100";
