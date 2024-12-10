@@ -3,18 +3,19 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-entity project_top is
+entity TMDS_top is
     port (
         clk   : in std_logic;
         reset : in std_logic;
 
         o_TMDS     : out std_logic_vector(2 downto 0);
+        o_TMDS_clk : out std_logic;
         o_pixclk   : out std_logic;
         o_HDMI_HPD : out std_logic
     );
-end entity project_top;
+end entity TMDS_top;
 
-architecture rtl of project_top is
+architecture rtl of TMDS_top is
     signal w_pixclk    : std_logic            := '0';
     signal w_clk_TMDS  : std_logic            := '0';
     signal r_counter_X : UNSIGNED(9 downto 0) := (others => '0');
@@ -22,15 +23,12 @@ architecture rtl of project_top is
     signal r_HSYNC     : std_logic            := '0';
     signal r_VSYNC     : std_logic            := '0';
     signal r_draw      : std_logic            := '0';
-
-    signal r_red_video  : unsigned(7 downto 0)  := (others => '0');
-    signal r_grn_video  : unsigned(7 downto 0)  := (others => '0');
-    signal r_blu_video  : unsigned(7 downto 0)  := (others => '0');
-    signal r_red_decr   : std_logic             := '0';
-    signal r_grn_decr   : std_logic             := '0';
-    signal r_blu_decr   : std_logic             := '0';
-    signal r_speed_incr : unsigned(1 downto 0)  := (others => '0');
-    signal r_speed_cntr : unsigned(15 downto 0) := (others => '0');
+    type t_video is array (0 to 3) of unsigned(7 downto 0);
+    signal r_video      : t_video                      := (others => (others => '0'));
+    signal r_decr       : std_logic_vector(2 downto 0) := (others => '0');
+    signal r_speed      : std_logic_vector(2 downto 0) := "001";
+    signal r_video_cntr : unsigned(19 downto 0)        := (others => '0');
+    signal r_speed_cntr : unsigned(21 downto 0)        := (others => '0');
 
     signal w_TMDS_red : std_logic_vector(9 downto 0) := (others => '0');
     signal w_TMDS_grn : std_logic_vector(9 downto 0) := (others => '0');
@@ -82,43 +80,30 @@ begin
     p_video_pattern : process (w_pixclk)
     begin
         if rising_edge(w_pixclk) then
+            r_video_cntr <= r_video_cntr + 1;
             ------------------------------------------------------------
-            r_red_decr <= not r_red_decr when ((r_red_video = x"FF") or (r_red_video = 0)) else
-                r_red_decr;
-            r_grn_decr <= not r_grn_decr when ((r_grn_video = x"FF") or (r_grn_video = 0)) else
-                r_grn_decr;
-            r_blu_decr <= not r_blu_decr when ((r_blu_video = x"FF") or (r_blu_video = 0)) else
-                r_blu_decr;
+            if (r_speed_cntr = 22SX"F") then
+                if (r_speed = "100") or (r_speed = "000") then
+                    r_speed <= "001";
+                else
+                    r_speed <= r_speed(1 downto 0) & '0';
+                end if;
+            end if;
             ------------------------------------------------------------
-            r_speed_cntr <= r_speed_cntr + 1;
-            if (r_speed_cntr = x"FFFF") then
-                ------------------------------------------------------------
-                r_speed_incr <= r_speed_incr + 1;
-                ------------------------------------------------------------
-                if (r_speed_incr = 0) then
-                    r_red_video <= (r_red_video - 10) when (r_red_decr = '1') else
-                        (r_red_video + 10);
-                else
-                    r_red_video <= (r_red_video - 1) when (r_red_decr = '1') else
-                        (r_red_video + 1);
-                end if;
-                ------------------------------------------------------------
-                if (r_speed_incr = 1) then
-                    r_grn_video <= (r_grn_video - 10) when (r_grn_decr = '1') else
-                        (r_grn_video + 10);
-                else
-                    r_grn_video <= (r_grn_video - 1) when (r_grn_decr = '1') else
-                        (r_grn_video + 1);
-                end if;
-                ------------------------------------------------------------
-                if (r_speed_incr = 2) then
-                    r_blu_video <= (r_blu_video - 10) when (r_blu_decr = '1') else
-                        (r_grn_video + 10);
-                else
-                    r_blu_video <= (r_blu_video - 1) when (r_blu_decr = '1') else
-                        (r_blu_video + 1);
-                end if;
-                ------------------------------------------------------------
+            if (r_video_cntr = 20SX"F") then
+                for i in 0 to 3 loop
+                    if (r_video(i) = x"FF") or (r_video(i) = 0) then
+                        r_decr(i) <= not r_decr(i);
+                    end if;
+                    ---------------
+                    if (r_decr(i) = '1') then
+                        r_video(i) <= (r_video(i) - 10) when r_speed(i) = '1' else
+                        (r_video(i) - 1);
+                    else
+                        r_video(i) <= (r_video(i) + 10) when r_speed(i) = '1' else
+                        (r_video(i) + 1);
+                    end if;
+                end loop;
             end if;
         end if;
     end process;
@@ -174,9 +159,9 @@ begin
                 r_TMDS_shift_blu <= w_TMDS_blu;
             else
                 -- TODO
-                r_TMDS_shift_red <= XXX;
-                r_TMDS_shift_grn <= XXX;
-                r_TMDS_shift_blu <= XXX;
+                r_TMDS_shift_red <= '0' & r_TMDS_shift_red(9 downto 1);
+                r_TMDS_shift_grn <= '0' & r_TMDS_shift_red(9 downto 1);
+                r_TMDS_shift_blu <= '0' & r_TMDS_shift_red(9 downto 1);
             end if;
         end if;
     end process;
@@ -184,6 +169,10 @@ begin
     --------------------------------------------------------------------
     -- Combinatorial
     o_HDMI_HPD <= '1';
+    o_TMDS_clk <= o_pixclk;
+    o_TMDS(2)  <= r_TMDS_shift_red(0);
+    o_TMDS(1)  <= r_TMDS_shift_grn(0);
+    o_TMDS(0)  <= r_TMDS_shift_blu(0);
     --------------------------------------------------------------------
     --------------------------------------------------------------------
 end architecture;
