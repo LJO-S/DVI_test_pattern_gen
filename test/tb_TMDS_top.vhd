@@ -58,7 +58,7 @@ begin
                 wait for 100 * clk_period;
                 test_runner_cleanup(runner);
 
-            elsif run("10000_clk_periods") then
+            elsif run("wait_VSYNC") then
                 wait for 10*clk_period;
                 wait_VSYNC(temp);
                 test_runner_cleanup(runner);
