@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+
 entity project_top is
     port (
         clk : in std_logic; -- 125 MHz clk
@@ -43,19 +44,18 @@ architecture rtl of project_top is
 begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
-    clk_wiz_inst : entity work.clk_wiz
+    clk_wiz_inst : entity work.clk_wiz_wrapper
         port map
         (
-            i_CLK      => i_CLK,
-            o_CLK_tmds => w_TMDS_clk
-            o_CLK_pixl => w_pixclk
+            i_CLK      => clk,
+            o_pixclk => w_pixclk,
+            o_TMDS_clk => w_TMDS_clk
         );
     --------------------------------------------------------------------
     --------------------------------------------------------------------
     TMDS_top_inst : entity work.TMDS_top
         port map
         (
-            reset      => reset,
             i_TMDS_clk => w_TMDS_clk,
             i_pixclk   => w_pixclk,
             temp       => open,
@@ -89,7 +89,7 @@ begin
             d0_out_ob => w_video_2_n
         );
 
-    obufds_top_inst_2 : entity work.obufds_top
+    obufds_top_inst_3 : entity work.obufds_top
         port map
         (
             d0        => w_TMDS_out_clk,
