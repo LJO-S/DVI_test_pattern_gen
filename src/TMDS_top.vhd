@@ -1,12 +1,9 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use ieee.math_real.all;
 
 entity TMDS_top is
     port (
-        reset : in std_logic;
-
         i_TMDS_clk : in std_logic;
         i_pixclk   : in std_logic;
 
@@ -45,7 +42,7 @@ architecture rtl of TMDS_top is
     signal r_TMDS_shift_load : std_logic                    := '0';
     -- TODO instantiate pll
 begin
-    temp       <= r_vsync;
+    temp <= r_vsync;
     --------------------------------------------------------------------
     --------------------------------------------------------------------
     -- Creating a 640x480p window
@@ -82,45 +79,12 @@ begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
     -- Video pattern generator
-    -- TODO: se över detta
     p_video_pattern : process (i_pixclk)
     begin
         if rising_edge(i_pixclk) then
-            if (r_video_cntr = 5000) then
-                r_video_cntr <= (others => '0');
-                for i in 0 to 2 loop
-                    r_video(i) <= r_video(i) + 1;
-                end loop;
-            else
-                r_video_cntr <= r_video_cntr + 1;
-            end if;
-            --r_speed_cntr <= r_speed_cntr + 1;
-            ------------------------------------------------------------
-            ----if (r_speed_cntr = 50000) then
-            --if (r_speed_cntr = 4000) then
-            --    if (r_speed = "100") or (r_speed = "000") then
-            --        r_speed <= "001";
-            --    else
-            --        r_speed <= r_speed(1 downto 0) & '0';
-            --    end if;
-            --end if;
-            --------------------------------------------------------------
-            ----if (r_video_cntr = 25000) then
-            --if (r_video_cntr = 2000) then
-            --    for i in 0 to 2 loop
-            --        if (r_video(i) = x"FF") or (r_video(i) = 0) then
-            --            r_decr(i) <= not r_decr(i);
-            --        end if;
-            --        ---------------
-            --        if (r_decr(i) = '1') then
-            --            r_video(i) <= (r_video(i) - 10) when r_speed(i) = '1' else
-            --            (r_video(i) - 1);
-            --        else
-            --            r_video(i) <= (r_video(i) + 10) when r_speed(i) = '1' else
-            --            (r_video(i) + 1);
-            --        end if;
-            --    end loop;
-            --end if;
+            r_video(0) <= r_counter_X(7 downto 0);
+            r_video(1) <= r_counter_Y(7 downto 0);
+            r_video(2) <= (others => '1');
         end if;
     end process;
     --------------------------------------------------------------------
@@ -175,8 +139,8 @@ begin
                 r_TMDS_shift_blu <= w_TMDS_blu;
             else
                 r_TMDS_shift_red <= '0' & r_TMDS_shift_red(9 downto 1);
-                r_TMDS_shift_grn <= '0' & r_TMDS_shift_red(9 downto 1);
-                r_TMDS_shift_blu <= '0' & r_TMDS_shift_red(9 downto 1);
+                r_TMDS_shift_grn <= '0' & r_TMDS_shift_grn(9 downto 1);
+                r_TMDS_shift_blu <= '0' & r_TMDS_shift_blu(9 downto 1);
             end if;
         end if;
     end process;
