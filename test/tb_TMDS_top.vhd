@@ -41,7 +41,6 @@ begin
     TMDS_top_inst : entity work.TMDS_top
         port map
         (
-            reset      => reset,
             i_pixclk   => i_pixclk,
             i_TMDS_clk => i_TMDS_clk,
             temp => temp,
