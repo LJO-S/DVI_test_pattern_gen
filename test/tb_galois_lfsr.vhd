@@ -18,12 +18,14 @@ architecture bench of galois_lfsr_tb is
   -- Generics
   -- Ports
   signal i_pixclk : std_logic := '0';
+  signal i_en : std_logic := '1';
   signal o_lfsr : std_logic_vector(7 downto 0);
 begin
 
   galois_lfsr_inst : entity work.galois_lfsr
   port map (
     i_pixclk => i_pixclk,
+    i_en => i_en,
     o_lfsr => o_lfsr
   );
   main : process
