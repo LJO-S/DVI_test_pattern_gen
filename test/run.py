@@ -67,10 +67,6 @@ for src_file in src_dir.glob("*.vhd"):
 for tb_file in tb_dir.glob("tb_*"):
     lib.add_source_files(tb_file)
 
-#lib.add_source_files(Path(__file__).parent / "tb_breakout_top.vhd")
-#
-#lib.add_source_files(Path(__file__).parent / ".." / ".." / "VHDL" / "breakout_top.vhd")
-
  
 VU.add_compile_option("modelsim.vcom_flags",["+acc=npr", '+cover="sbcef','-check_synthesis'])
 
