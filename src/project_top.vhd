@@ -44,9 +44,10 @@ architecture rtl of project_top is
 begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
+    -- TODO REMOVE
     --clk_wiz_inst : entity work.clk_wiz_wrapper
     --    port map
-     --   (
+    --    (
     --        i_CLK      => clk,
     --        o_pixclk => w_pixclk,
     --        o_TMDS_clk => w_TMDS_clk

@@ -20,7 +20,7 @@ Constraint files are found in HDMI_TPG/constr/
 
 TODO:
 -- Short description about 8b/10b. Not the same as IBM's standard! This is totally different.
--- Test pattern_gen
+-- Test pattern_gen on HW
 -- Implement Xilinx SPram
 -- Remove commented out clk_wiz_wrapper
 
