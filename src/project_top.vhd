@@ -44,13 +44,13 @@ architecture rtl of project_top is
 begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
-    clk_wiz_inst : entity work.clk_wiz_wrapper
-        port map
-        (
-            i_CLK      => clk,
-            o_pixclk => w_pixclk,
-            o_TMDS_clk => w_TMDS_clk
-        );
+    --clk_wiz_inst : entity work.clk_wiz_wrapper
+    --    port map
+     --   (
+    --        i_CLK      => clk,
+    --        o_pixclk => w_pixclk,
+    --        o_TMDS_clk => w_TMDS_clk
+    --    );
     --------------------------------------------------------------------
     --------------------------------------------------------------------
     TMDS_top_inst : entity work.TMDS_top
