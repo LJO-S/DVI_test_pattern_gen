@@ -39,8 +39,12 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         while test_suite loop
-            if run("test_alive") then
-                info("Hello world test_alive");
+            if run("addr_changes") then
+                wait until i_pixclk = '1';
+                for i in 63 downto 0 loop
+                    i_addra <= STD_LOGIC_VECTOR(to_unsigned(i, i_addra'length));
+                    wait for 2*clk_period;
+                end loop;
                 wait for 100 * clk_period;
                 test_runner_cleanup(runner);
             end if;
