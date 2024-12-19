@@ -30,7 +30,7 @@ architecture rtl of SPmem is
     constant C_RAM_WIDTH       : integer := 8; -- Specify RAM data width
     constant C_RAM_DEPTH       : integer := 64; -- Specify RAM depth (number of entries)
     constant C_RAM_PERFORMANCE : string  := "LOW_LATENCY"; -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
-    constant C_INIT_FILE       : string  := "E:\fpga\HDMI\src\SPmem_init.txt"; -- Specify name/location of RAM initialization file if using one (leave blank if not)
+    constant C_INIT_FILE       : string  := "../../../src/SPmem_init.txt"; -- Specify name/location of RAM initialization file if using one (leave blank if not)
     type ram_type is array (C_RAM_DEPTH - 1 downto 0) of std_logic_vector (C_RAM_WIDTH - 1 downto 0); -- 2D Array Declaration for RAM signal
 
     
@@ -66,7 +66,7 @@ architecture rtl of SPmem is
     ------------------------------------------------------------------------
     function init_from_file_or_zeroes(ramfile : string) return ram_type is
     begin
-        if ramfile = "E:\fpga\HDMI\src\SPmem_init.txt" then
+        if ramfile = C_INIT_FILE then
             return InitRamFromFile(ramfile);
         else
             return (others => (others => '0'));
