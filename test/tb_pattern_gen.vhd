@@ -27,6 +27,8 @@ architecture bench of pattern_generator_tb is
     signal o_video_red    : std_logic_vector(7 downto 0);
     signal o_video_grn    : std_logic_vector(7 downto 0);
     signal o_video_blu    : std_logic_vector(7 downto 0);
+
+    signal temp : UNSIGNED(6 downto 0) := (others => '0');
 begin
 
     pattern_generator_inst : entity work.pattern_generator
@@ -41,7 +43,8 @@ begin
             o_counter_Y    => o_counter_Y,
             o_video_red    => o_video_red,
             o_video_grn    => o_video_grn,
-            o_video_blu    => o_video_blu
+            o_video_blu    => o_video_blu,
+            temp           => temp
         );
     main : process
     begin
@@ -50,13 +53,13 @@ begin
             if run("state_switch") then
                 wait until i_pixclk = '1';
                 i_pattern_0_db <= '1';
-                wait for 10*clk_period;
+                wait for 10 * clk_period;
                 i_pattern_0_db <= '0';
                 i_pattern_1_db <= '1';
-                wait for 10*clk_period;
+                wait for 10 * clk_period;
                 i_pattern_1_db <= '0';
                 i_pattern_2_db <= '1';
-                wait for 10*clk_period;
+                wait for 10 * clk_period;
                 i_pattern_2_db <= '0';
                 i_pattern_3_db <= '1';
                 wait for 200 * clk_period;
@@ -67,7 +70,7 @@ begin
                 i_pattern_1_db <= '0';
                 i_pattern_2_db <= '0';
                 i_pattern_3_db <= '0';
-                wait for 100 * clk_period;
+                wait for 200 * clk_period;
                 test_runner_cleanup(runner);
             elsif run("smiley") then
                 wait until i_pixclk = '1';
@@ -75,7 +78,7 @@ begin
                 i_pattern_1_db <= '1';
                 i_pattern_2_db <= '0';
                 i_pattern_3_db <= '0';
-                wait for 200 * clk_period;
+                wait until temp = 60;
                 test_runner_cleanup(runner);
             elsif run("text") then
                 wait until i_pixclk = '1';
