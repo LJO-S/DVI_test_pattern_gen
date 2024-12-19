@@ -16,7 +16,9 @@ entity pattern_generator is
 
         o_video_red : out std_logic_vector(7 downto 0);
         o_video_grn : out std_logic_vector(7 downto 0);
-        o_video_blu : out std_logic_vector(7 downto 0)
+        o_video_blu : out std_logic_vector(7 downto 0);
+
+        temp : out unsigned(6 downto 0)
     );
 end entity pattern_generator;
 
@@ -32,25 +34,52 @@ architecture rtl of pattern_generator is
     signal r_counter_X : UNSIGNED(9 downto 0) := (others => '0');
     signal r_counter_Y : UNSIGNED(9 downto 0) := (others => '0');
 
-    signal w_smiley_en      : std_logic                    := '0';
-    signal w_smiley_draw    : std_logic                    := '0';
-    signal w_symbol_active  : std_logic_vector(3 downto 0) := (others => '0');
-    signal w_col_count_div  : unsigned(6 downto 0);                            -- 40
-    signal w_row_count_div  : unsigned(6 downto 0);                            -- 30
-    signal w_col_addr       : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
-    signal w_row_addr       : std_logic_vector(3 downto 0) := (others => '0'); -- 0-15 Y
-    signal r_symbol_active  : std_logic_vector(3 downto 0) := (others => '0');
-    signal r_ROM_data       : std_logic_vector(7 downto 0) := (others => '0');
-    signal r_bit_draw       : std_logic                    := '0';
-    signal r_ROM_addr       : std_logic_vector(7 downto 0);
+    signal w_smiley_en          : std_logic                    := '0';
+    signal w_smiley_draw        : std_logic                    := '0';
+    signal w_symbol_active      : std_logic_vector(3 downto 0) := (others => '0');
+    signal w_col_count_div      : unsigned(6 downto 0);                            -- 40
+    signal w_row_count_div      : unsigned(6 downto 0);                            -- 30
+    signal w_col_count_div_fine : unsigned(7 downto 0);                            -- 40
+    signal w_row_count_div_fine : unsigned(7 downto 0);                            -- 30
+    signal w_col_addr           : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
+    signal w_col_addr_d0        : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
+    signal w_col_addr_d1        : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
+    signal w_col_addr_d2        : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
+    signal w_col_addr_d3        : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
+
+    signal w_row_addr      : std_logic_vector(3 downto 0) := (others => '0'); -- 0-15 Y
+    signal r_symbol_active : std_logic_vector(3 downto 0) := (others => '0');
+    signal r_ROM_data      : std_logic_vector(7 downto 0) := (others => '0');
+    signal r_bit_draw      : std_logic                    := '0';
+    signal r_ROM_addr      : std_logic_vector(7 downto 0);
+
+    signal r_mem_addr : std_logic_vector(5 downto 0) := (others => '0');
+    signal r_mem_din  : std_logic_vector(7 downto 0) := (others => '0');
+    signal r_mem_we   : std_logic                    := '0';
+    signal r_mem_en   : std_logic                    := '0';
+    signal r_mem_dout : std_logic_vector(7 downto 0) := (others => '0');
 
 begin
+    ----------------------------------------------------------------
+    ----------------------------------------------------------------
     galois_lfsr_inst : entity work.galois_lfsr
         port map
         (
             i_pixclk => i_pixclk,
             i_en     => w_lfsr_en,
             o_lfsr   => w_lfsr
+        );
+
+    -- TODO: 1 CLOCK CYCLE LATENCY ON DATA
+    SPmem_inst : entity work.SPmem
+        port map
+        (
+            i_pixclk => i_pixclk,
+            i_addra  => r_mem_addr,
+            i_dina   => r_mem_din,
+            i_wea    => r_mem_we,
+            i_ena    => r_mem_en,
+            o_douta  => r_mem_dout
         );
     ----------------------------------------------------------------
     ----------------------------------------------------------------
@@ -64,16 +93,24 @@ begin
     w_lfsr_en <= '1' when (s_state = pattern_3) else
         '0';
     -- 1:16 Tile scaling
-    w_col_addr      <= std_logic_vector(r_counter_X(5 downto 3)); -- TODO
-    w_row_addr      <= std_logic_vector(r_counter_Y(6 downto 3)); -- TODO
-    w_col_count_div <= r_counter_X(r_counter_X'left downto 3);
-    w_row_count_div <= r_counter_Y(r_counter_Y'left downto 3);
+    w_col_addr           <= std_logic_vector(r_counter_X(5 downto 3));
+    w_row_addr           <= std_logic_vector(r_counter_Y(6 downto 3));
+    w_col_count_div      <= r_counter_X(r_counter_X'left downto 3);
+    w_row_count_div      <= r_counter_Y(r_counter_Y'left downto 3);
+    w_col_count_div_fine <= r_counter_X(r_counter_X'left downto 2);
+    w_row_count_div_fine <= r_counter_Y(r_counter_Y'left downto 2);
 
-    w_smiley_draw <= '1' when (w_col_count_div >= 39) and (w_col_count_div <= 40)
-        and (w_row_count_div >= 28) and (w_row_count_div <= 31) else
+    w_smiley_draw <= '1' when (w_col_count_div >= 33) and (w_col_count_div <= 46)
+        and (w_row_count_div >= 32) and (w_row_count_div <= 47) else
         '0';
-    w_symbol_active <= x"1" when ((w_row_count_div >= 30) and (w_row_count_div <= 31)) else
+
+    -- X: (32-39) --> (40-47)
+    -- Y: 
+    w_symbol_active <= x"1" when (w_col_count_div >= 40) and (w_col_count_div <= 47) else
         x"0";
+    --w_symbol_active <= x"1" when ((w_row_count_div >= 34) and (w_row_count_div <= 35)) else
+    --    x"0";
+    temp <= w_row_count_div;
     ----------------------------------------------------------------
     ----------------------------------------------------------------
     p_video_draw : process (i_pixclk)
@@ -161,6 +198,9 @@ begin
 
         elsif (s_state = pattern_2) then
             -- Text (Use Xilinx template for single port BRAM instantiated with file)
+            o_video_blu <= r_mem_dout;
+            o_video_red <= r_mem_dout;
+            o_video_grn <= r_mem_dout;
 
         elsif (s_state = pattern_3) then
             -- Galois LFSR Pseudo-random Noise Gen
@@ -178,13 +218,17 @@ begin
     -- BRAM
     -- ROM
     -- 1:1 tile scaling = 8x16 ROM 
+    -- 1:4 tile scaling = 64x128
+
     p_ROM : process (i_pixclk)
     begin
         if rising_edge(i_pixclk) then
             if (w_smiley_en = '1') then
-                r_ROM_addr <= w_symbol_active & w_row_addr;
+                w_col_addr_d0 <= w_col_addr;
+                w_col_addr_d1 <= w_col_addr_d0;
+                r_ROM_addr    <= w_symbol_active & w_row_addr;
                 if (w_smiley_draw = '1') then
-                    r_bit_draw <= r_ROM_data(to_integer(unsigned(not w_col_addr)));
+                    r_bit_draw <= r_ROM_data(to_integer(unsigned(not w_col_addr_d1)));
                 else
                     r_bit_draw <= '0';
                 end if;
