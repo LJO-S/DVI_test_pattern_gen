@@ -3,16 +3,17 @@
 This design creates a DVI driver (HDMI without audio) with 4 different selectable test patterns.
 The design is implemented on the Zybo Z7-10, using only PL and the onboard 125MHz oscillator.
 
-VHDL files are found in /src/
-vunit files are found in /test/
-Constraint files are found in /constr/
+VHDL files are found in /src/.
+vunit files are found in /test/.
+Constraint files are found in /constr/.
 
 ```bash
 --DVI_TPG
  |
- |--src/
- |--test/
- |--cnstr/
+ |--/src/
+ |--/test/
+ |--/constraints/
+ |--/images/
 ```
 
 The implementation uses 8b/10b encoding, illustrated in the figure below and each step is extensively commented on in /src/TMDS_encoder.vhd. Here's a short breakdown of the encoding:
