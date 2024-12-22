@@ -7,6 +7,13 @@ entity TMDS_top is
         i_TMDS_clk : in std_logic;
         i_pixclk   : in std_logic;
 
+        i_HSYNC     : in std_logic;
+        i_VSYNC     : in std_logic;
+        i_draw      : in std_logic;
+        i_video_red : in std_logic_vector(7 downto 0);
+        i_video_grn : in std_logic_vector(7 downto 0);
+        i_video_blu : in std_logic_vector(7 downto 0);
+
         temp : out std_logic;
 
         o_TMDS     : out std_logic_vector(2 downto 0);
@@ -16,20 +23,6 @@ entity TMDS_top is
 end entity TMDS_top;
 
 architecture rtl of TMDS_top is
-    signal r_counter_X : UNSIGNED(9 downto 0) := (others => '0');
-    signal r_counter_Y : UNSIGNED(9 downto 0) := (others => '0');
-    signal r_HSYNC     : std_logic            := '0';
-    signal r_VSYNC     : std_logic            := '0';
-    signal r_draw      : std_logic            := '0';
-
-    type t_video is array (0 to 2) of unsigned(7 downto 0);
-
-    signal r_video      : t_video                      := (others => (others => '0'));
-    signal r_decr       : std_logic_vector(2 downto 0) := (others => '0');
-    signal r_decrement  : std_logic                    := '0';
-    signal r_speed      : std_logic_vector(2 downto 0) := "001";
-    signal r_video_cntr : unsigned(15 downto 0)        := (others => '0');
-    signal r_speed_cntr : unsigned(15 downto 0)        := (others => '0');
 
     signal w_TMDS_red : std_logic_vector(9 downto 0) := (others => '0');
     signal w_TMDS_grn : std_logic_vector(9 downto 0) := (others => '0');
@@ -40,63 +33,20 @@ architecture rtl of TMDS_top is
     signal r_TMDS_shift_grn  : std_logic_vector(9 downto 0) := (others => '0');
     signal r_TMDS_shift_blu  : std_logic_vector(9 downto 0) := (others => '0');
     signal r_TMDS_shift_load : std_logic                    := '0';
-    -- TODO instantiate pll
 begin
-    temp <= r_vsync;
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
-    -- Creating a 640x480p window
-    p_gen_video_frame : process (i_pixclk)
-    begin
-        if rising_edge(i_pixclk) then
-            if (r_counter_X = 799) then
-                r_counter_X <= (others => '0');
-                if (r_counter_Y = 524) then
-                    r_counter_Y <= (others => '0');
-                else
-                    r_counter_Y <= r_counter_Y + 1;
-                end if;
-            else
-                r_counter_X <= r_counter_X + 1;
-            end if;
-
-            if (r_counter_X < 640) and (r_counter_Y < 480) then
-                r_draw <= '1';
-            else
-                r_draw <= '0';
-            end if;
-
-            -- Notice how these are inverted compared to regular HS/VS signals
-            -- A HI signal notifies the TMDS_encoder that we're syncing
-            -- (instead of turning off the electron beam in a CRT monitor)
-            r_HSYNC <= '1' when ((r_counter_X >= 656) and (r_counter_X < 752)) else
-                '0';
-            r_VSYNC <= '1' when ((r_counter_Y >= 490) and (r_counter_Y < 492)) else
-                '0';
-
-        end if;
-    end process;
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
-    -- Video pattern generator
-    p_video_pattern : process (i_pixclk)
-    begin
-        if rising_edge(i_pixclk) then
-            r_video(0) <= r_counter_X(7 downto 0);
-            r_video(1) <= r_counter_Y(7 downto 0);
-            r_video(2) <= (others => '1');
-        end if;
-    end process;
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
+    --**************************************************************************************************
+    --**************************************************************************************************
+    temp <= i_VSYNC;
+    --**************************************************************************************************
+    --**************************************************************************************************
     -- TMDS encoders
     TMDS_encoder_inst_0 : entity work.TMDS_encoder
         port map
         (
             clk          => i_pixclk,
-            i_video_en   => r_draw,
+            i_video_en   => i_draw,
             i_CD         => "00",
-            i_video_data => std_logic_vector(r_video(0)),
+            i_video_data => std_logic_vector(i_video_red),
             o_TMDS       => w_TMDS_red
         );
 
@@ -104,9 +54,9 @@ begin
         port map
         (
             clk          => i_pixclk,
-            i_video_en   => r_draw,
+            i_video_en   => i_draw,
             i_CD         => "00",
-            i_video_data => std_logic_vector(r_video(1)),
+            i_video_data => std_logic_vector(i_video_grn),
             o_TMDS       => w_TMDS_grn
         );
 
@@ -114,13 +64,13 @@ begin
         port map
         (
             clk          => i_pixclk,
-            i_video_en   => r_draw,
-            i_CD         => r_VSYNC & r_HSYNC,
-            i_video_data => std_logic_vector(r_video(2)),
+            i_video_en   => i_draw,
+            i_CD         => i_VSYNC & i_HSYNC,
+            i_video_data => std_logic_vector(i_video_blu),
             o_TMDS       => w_TMDS_blu
         );
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
+    --**************************************************************************************************
+    --**************************************************************************************************
     -- TMDS shift-out registers
     process (i_TMDS_clk)
     begin
@@ -144,14 +94,14 @@ begin
             end if;
         end if;
     end process;
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
+    --**************************************************************************************************
+    --**************************************************************************************************
     -- Combinatorial
     o_HDMI_HPD <= '1';
     o_TMDS_clk <= i_pixclk;
     o_TMDS(2)  <= r_TMDS_shift_red(0);
     o_TMDS(1)  <= r_TMDS_shift_grn(0);
     o_TMDS(0)  <= r_TMDS_shift_blu(0);
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
+    --**************************************************************************************************
+    --**************************************************************************************************
 end architecture;
