@@ -86,7 +86,7 @@ begin
                 i_pattern_1_db <= '0';
                 i_pattern_2_db <= '1';
                 i_pattern_3_db <= '0';
-                wait for 200 * clk_period;
+                wait until temp = 60;
                 test_runner_cleanup(runner);
             elsif run("lfsr") then
                 wait until i_pixclk = '1';
