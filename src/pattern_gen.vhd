@@ -11,9 +11,11 @@ entity pattern_generator is
         i_pattern_2_db : in std_logic;
         i_pattern_3_db : in std_logic;
 
-        o_counter_X : out unsigned(9 downto 0); -- might need to pipe this
-        o_counter_Y : out unsigned(9 downto 0); -- might need to pipe this
-
+        o_counter_X : out unsigned(9 downto 0);
+        o_counter_Y : out unsigned(9 downto 0);
+        o_HSYNC     : out std_logic;
+        o_VSYNC     : out std_logic;
+        o_draw      : out std_logic;
         o_video_red : out std_logic_vector(7 downto 0);
         o_video_grn : out std_logic_vector(7 downto 0);
         o_video_blu : out std_logic_vector(7 downto 0);
@@ -33,6 +35,9 @@ architecture rtl of pattern_generator is
 
     signal r_counter_X : UNSIGNED(9 downto 0) := (others => '0');
     signal r_counter_Y : UNSIGNED(9 downto 0) := (others => '0');
+    signal r_HSYNC     : std_logic            := '0';
+    signal r_VSYNC     : std_logic            := '0';
+    signal r_draw      : std_logic            := '0';
 
     signal w_smiley_en     : std_logic                    := '0';
     signal w_smiley_draw   : std_logic                    := '0';
@@ -51,12 +56,9 @@ architecture rtl of pattern_generator is
 
     signal w_mem_en            : std_logic                    := '0';
     signal r_mem_addr          : std_logic_vector(5 downto 0) := (others => '0');
-    signal r_mem_din           : std_logic_vector(7 downto 0) := (others => '0');
     signal r_mem_dout          : std_logic_vector(7 downto 0) := (others => '0');
     signal w_mem_draw          : std_logic                    := '0';
     signal w_mem_symbol_active : unsigned(5 downto 0)         := (others => '0'); -- 0-63
-    signal w_mem_col_addr_d0   : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
-    signal w_mem_col_addr_d1   : std_logic_vector(2 downto 0) := (others => '0'); -- 0-7 X
     signal r_mem_bit_draw      : std_logic                    := '0';
 
 begin
@@ -76,7 +78,7 @@ begin
         (
             i_pixclk => i_pixclk,
             i_addra  => r_mem_addr,
-            i_dina   => r_mem_din,
+            i_dina => (others => '0'),
             i_wea    => '0',
             i_ena    => w_mem_en,
             o_douta  => r_mem_dout
@@ -85,8 +87,12 @@ begin
     --**************************************************************************************************
     -- Concurrent assignments 
     --
+    o_draw      <= r_draw;
+    o_HSYNC     <= r_HSYNC;
+    o_VSYNC     <= r_VSYNC;
     o_counter_X <= r_counter_X;
     o_counter_Y <= r_counter_Y;
+
     --------------------------------------------------------------------
     w_button_press <= i_pattern_0_db or i_pattern_1_db or i_pattern_2_db or i_pattern_3_db;
     --------------------------------------------------------------------
@@ -124,6 +130,20 @@ begin
             else
                 r_counter_X <= r_counter_X + 1;
             end if;
+
+            if (r_counter_X < 640) and (r_counter_Y < 480) then
+                r_draw <= '1';
+            else
+                r_draw <= '0';
+            end if;
+
+            -- Notice how these are inverted compared to regular HS/VS signals
+            -- A HI signal notifies the TMDS_encoder that we're syncing
+            -- (instead of turning off the electron beam in a CRT monitor)
+            r_HSYNC <= '1' when ((r_counter_X >= 656) and (r_counter_X < 752)) else
+                '0';
+            r_VSYNC <= '1' when ((r_counter_Y >= 490) and (r_counter_Y < 492)) else
+                '0';
         end if;
     end process p_video_draw;
     --**************************************************************************************************
@@ -216,12 +236,8 @@ begin
     -- X: 16-24(8)  32-40(8)   48-56(8)   64-72(8)
     -- Y: 24-40(16)
     -- SPmem logic
-    -- TODO: bake this into the all-process below
-    --w_mem_draw                                   <= '1' when (w_col_count_div >= 16) and (w_col_count_div < 72) and    (w_row_count_div >= 32) and (w_row_count_div <= 47) else '0';
-
     w_mem_en <= '1' when (s_state = pattern_2) else
         '0';
-
     process (all)
     begin
         if (w_row_count_div >= 32) and (w_row_count_div <= 47) then
