@@ -109,7 +109,7 @@ begin
     w_row_count_div <= r_counter_Y(r_counter_Y'left downto 3);
     --------------------------------------------------------------------
     w_smiley_draw <= '1' when (w_col_count_div >= 33) and (w_col_count_div <= 46)
-        and (w_row_count_div >= 32) and (w_row_count_div <= 47) else
+        and (w_row_count_div >= 16) and (w_row_count_div <= 31) else
         '0';
     w_symbol_active <= x"1" when (w_col_count_div >= 40) and (w_col_count_div <= 47) else
         x"0";
@@ -199,10 +199,10 @@ begin
         if (s_state = pattern_0) then
             -- Flag of Sweden
             if (r_counter_X(r_counter_X'left downto 5) >= 7 and r_counter_X(r_counter_X'left downto 5) < 10) or
-                (r_counter_Y(r_counter_Y'left downto 5) >= 7 and r_counter_Y(r_counter_Y'left downto 5) < 10) then
-                o_video_blu <= (others => '1');
-                o_video_red <= (others => '0');
-                o_video_grn <= (others => '1');
+                (r_counter_Y(r_counter_Y'left downto 4) >= 12 and r_counter_Y(r_counter_Y'left downto 4) <= 17) then
+                o_video_blu                                                                              <= (others => '0');
+                o_video_red                                                                              <= (others => '1');
+                o_video_grn                                                                              <= (others => '1');
             else
                 o_video_blu <= (others => '1');
                 o_video_red <= (others => '0');
@@ -210,8 +210,8 @@ begin
             end if;
         elsif (s_state = pattern_1) then
             -- Smiley Face (Use familiar ROM instantiation)
-            o_video_blu <= (others => r_bit_draw);
-            o_video_red <= (others => '0');
+            o_video_blu <= (others => '0');
+            o_video_red <= (others => r_bit_draw);
             o_video_grn <= (others => r_bit_draw);
 
         elsif (s_state = pattern_2) then
@@ -240,7 +240,8 @@ begin
         '0';
     process (all)
     begin
-        if (w_row_count_div >= 32) and (w_row_count_div <= 47) then
+        if ((w_row_count_div >= 32) and (w_row_count_div <= 47)) or
+            ((w_row_count_div >= 16) and (w_row_count_div    <= 31)) then
 
             w_mem_draw <= '1';
 
@@ -298,7 +299,7 @@ begin
                 w_col_addr_d1 <= w_col_addr_d0;
                 r_ROM_addr    <= w_symbol_active & w_row_addr;
 
-                if (w_smiley_draw = '0') then
+                if (w_smiley_draw = '1') then
                     r_bit_draw <= r_ROM_data(to_integer(unsigned(not w_col_addr_d1)));
                 else
                     r_bit_draw <= '0';
@@ -307,37 +308,37 @@ begin
                 case r_ROM_addr is
                         -- L
                     when x"00" => r_ROM_data <= "00000000";
-                    when x"01" => r_ROM_data <= "00000000";
+                    when x"01" => r_ROM_data <= "00000111";
                     when x"02" => r_ROM_data <= "00001111";
-                    when x"03" => r_ROM_data <= "00111111";
-                    when x"04" => r_ROM_data <= "01111111";
-                    when x"05" => r_ROM_data <= "11111001";
-                    when x"06" => r_ROM_data <= "11111111";
-                    when x"07" => r_ROM_data <= "11111111";
-                    when x"08" => r_ROM_data <= "11110011";
-                    when x"09" => r_ROM_data <= "01111000";
-                    when x"0A" => r_ROM_data <= "00111111";
-                    when x"0B" => r_ROM_data <= "00001111";
-                    when x"0C" => r_ROM_data <= "00000000";
-                    when x"0D" => r_ROM_data <= "00000000";
-                    when x"0E" => r_ROM_data <= "00000000";
+                    when x"03" => r_ROM_data <= "00011111";
+                    when x"04" => r_ROM_data <= "00111101";
+                    when x"05" => r_ROM_data <= "01111101";
+                    when x"06" => r_ROM_data <= "01111101";
+                    when x"07" => r_ROM_data <= "01111101";
+                    when x"08" => r_ROM_data <= "01111111";
+                    when x"09" => r_ROM_data <= "01111111";
+                    when x"0A" => r_ROM_data <= "01110111";
+                    when x"0B" => r_ROM_data <= "00110000";
+                    when x"0C" => r_ROM_data <= "00011111";
+                    when x"0D" => r_ROM_data <= "00001111";
+                    when x"0E" => r_ROM_data <= "00000111";
                     when x"0F" => r_ROM_data <= "00000000";
                         -- I
                     when x"10" => r_ROM_data <= "00000000";
-                    when x"11" => r_ROM_data <= "00000000";
+                    when x"11" => r_ROM_data <= "11100000";
                     when x"12" => r_ROM_data <= "11110000";
-                    when x"13" => r_ROM_data <= "11111100";
-                    when x"14" => r_ROM_data <= "11111110";
-                    when x"15" => r_ROM_data <= "10011111";
-                    when x"16" => r_ROM_data <= "11111111";
-                    when x"17" => r_ROM_data <= "11111111";
-                    when x"18" => r_ROM_data <= "11001111";
-                    when x"19" => r_ROM_data <= "00011110";
-                    when x"1A" => r_ROM_data <= "11111100";
-                    when x"1B" => r_ROM_data <= "11110000";
-                    when x"1C" => r_ROM_data <= "00000000";
-                    when x"1D" => r_ROM_data <= "00000000";
-                    when x"1E" => r_ROM_data <= "00000000";
+                    when x"13" => r_ROM_data <= "11111000";
+                    when x"14" => r_ROM_data <= "10111100";
+                    when x"15" => r_ROM_data <= "10111110";
+                    when x"16" => r_ROM_data <= "10111110";
+                    when x"17" => r_ROM_data <= "10111110";
+                    when x"18" => r_ROM_data <= "11111110";
+                    when x"19" => r_ROM_data <= "11111110";
+                    when x"1A" => r_ROM_data <= "11101110";
+                    when x"1B" => r_ROM_data <= "00001100";
+                    when x"1C" => r_ROM_data <= "11111000";
+                    when x"1D" => r_ROM_data <= "11110000";
+                    when x"1E" => r_ROM_data <= "11100000";
                     when x"1F" => r_ROM_data <= "00000000";
                         -- others
                     when others => r_ROM_data <= (others => '0');
@@ -349,5 +350,4 @@ begin
     end process;
     --**************************************************************************************************
     --**************************************************************************************************
-
 end architecture;
