@@ -1,10 +1,15 @@
 library ieee;
 use ieee.std_logic_1164.all;
-
+use ieee.numeric_std.all;
 
 entity project_top is
     port (
         clk : in std_logic; -- 125 MHz clk
+
+        i_pattern_0 : in std_logic;
+        i_pattern_1 : in std_logic;
+        i_pattern_2 : in std_logic;
+        i_pattern_3 : in std_logic;
 
         --o_HDMI_HPD : out std_logic;
 
@@ -26,6 +31,20 @@ architecture rtl of project_top is
     signal w_pixclk   : std_logic;
     signal w_TMDS_clk : std_logic;
     signal w_HDMI_HPD : std_logic;
+
+    signal w_pattern_0_db : std_logic;
+    signal w_pattern_1_db : std_logic;
+    signal w_pattern_2_db : std_logic;
+    signal w_pattern_3_db : std_logic;
+    signal w_counter_X    : unsigned(9 downto 0);
+    signal w_counter_Y    : unsigned(9 downto 0);
+    signal w_HSYNC        : std_logic;
+    signal w_VSYNC        : std_logic;
+    signal w_draw         : std_logic;
+    signal w_video_red    : std_logic_vector(7 downto 0);
+    signal w_video_grn    : std_logic_vector(7 downto 0);
+    signal w_video_blu    : std_logic_vector(7 downto 0);
+    signal w_temp         : unsigned(6 downto 0);
 
     signal w_video_0_p : std_logic;
     signal w_video_0_n : std_logic;
@@ -57,12 +76,18 @@ begin
     TMDS_top_inst : entity work.TMDS_top
         port map
         (
-            i_TMDS_clk => w_TMDS_clk,
-            i_pixclk   => w_pixclk,
-            temp       => open,
-            o_TMDS     => w_TMDS,
-            o_TMDS_clk => w_TMDS_out_clk,
-            o_HDMI_HPD => w_HDMI_HPD
+            i_TMDS_clk  => w_TMDS_clk,
+            i_pixclk    => w_pixclk,
+            i_HSYNC     => w_HSYNC,
+            i_VSYNC     => w_VSYNC,
+            i_draw      => w_draw,
+            i_video_red => w_video_red,
+            i_video_grn => w_video_grn,
+            i_video_blu => w_video_blu,
+            temp        => open,
+            o_TMDS      => w_TMDS,
+            o_TMDS_clk  => w_TMDS_out_clk,
+            o_HDMI_HPD  => w_HDMI_HPD
         );
     --------------------------------------------------------------------
     --------------------------------------------------------------------
@@ -96,6 +121,56 @@ begin
             d0        => w_TMDS_out_clk,
             d0_out    => w_TMDS_out_clk_p,
             d0_out_ob => w_TMDS_out_clk_n
+        );
+    --------------------------------------------------------------------
+    --------------------------------------------------------------------
+    pattern_generator_inst : entity work.pattern_generator
+        port map
+        (
+            i_pixclk       => w_pixclk,
+            i_pattern_0_db => w_pattern_0_db,
+            i_pattern_1_db => w_pattern_1_db,
+            i_pattern_2_db => w_pattern_2_db,
+            i_pattern_3_db => w_pattern_3_db,
+            o_counter_X    => open,
+            o_counter_Y    => open,
+            o_HSYNC        => w_HSYNC,
+            o_VSYNC        => w_VSYNC,
+            o_draw         => w_draw,
+            o_video_red    => w_video_red,
+            o_video_grn    => w_video_grn,
+            o_video_blu    => w_video_blu,
+            temp           => open
+        );
+    --------------------------------------------------------------------
+    --------------------------------------------------------------------
+    PB_debounce_inst_0 : entity work.PB_debounce
+        port map
+        (
+            i_CLK         => w_pixclk,
+            i_PB          => i_pattern_0,
+            o_PB_debounce => w_pattern_0_db
+        );
+    PB_debounce_inst_1 : entity work.PB_debounce
+        port map
+        (
+            i_CLK         => w_pixclk,
+            i_PB          => i_pattern_1,
+            o_PB_debounce => w_pattern_1_db
+        );
+    PB_debounce_inst_2 : entity work.PB_debounce
+        port map
+        (
+            i_CLK         => w_pixclk,
+            i_PB          => i_pattern_2,
+            o_PB_debounce => w_pattern_2_db
+        );
+    PB_debounce_inst_3 : entity work.PB_debounce
+        port map
+        (
+            i_CLK         => w_pixclk,
+            i_PB          => i_pattern_3,
+            o_PB_debounce => w_pattern_3_db
         );
     --------------------------------------------------------------------
     --------------------------------------------------------------------
