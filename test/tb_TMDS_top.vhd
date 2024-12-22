@@ -27,12 +27,12 @@ architecture bench of TMDS_top_tb is
     signal o_pixclk   : std_logic;
     signal o_HDMI_HPD : std_logic;
 
-    signal i_HSYNC     : std_logic := '0';
-    signal i_VSYNC     : std_logic := '0';
-    signal i_draw      : std_logic := '0';
-    signal i_video_red : std_logic_vector(7 downto 0) := (others => '0') ;
-    signal i_video_grn : std_logic_vector(7 downto 0) := (others => '0') ;
-    signal i_video_blu : std_logic_vector(7 downto 0) := (others => '0') ;
+    signal i_HSYNC     : std_logic                    := '0';
+    signal i_VSYNC     : std_logic                    := '0';
+    signal i_draw      : std_logic                    := '0';
+    signal i_video_red : std_logic_vector(7 downto 0) := (others => '0');
+    signal i_video_grn : std_logic_vector(7 downto 0) := (others => '0');
+    signal i_video_blu : std_logic_vector(7 downto 0) := (others => '0');
 
     procedure wait_VSYNC (temp : in std_logic) is
     begin
