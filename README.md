@@ -5,9 +5,15 @@ The design is implemented on the Zybo Z7-10, using only PL and the onboard 125MH
 
 Four (4) test-patterns are generated and can be switched between using the 4 push-buttons on the Zybo Z710 dev board. The following test-patterns can be displayed:
 1. Random noise created with a 32-bit Galois LFSR.
+![alt text](https://github.com/LJO-S/DVI_test_pattern_gen/blob/main/images/IMG_5132.jpg)
 2. A smiley face stored in block RAM.
+![alt text](https://github.com/LJO-S/DVI_test_pattern_gen/blob/main/images/IMG_5135.jpg)
 3. Text stored in distributed RAM.
+![alt text](https://github.com/LJO-S/DVI_test_pattern_gen/blob/main/images/IMG_5134.jpg)
 4. The Swedish flag
+![alt text](https://github.com/LJO-S/DVI_test_pattern_gen/blob/main/images/IMG_5136.jpg)
+
+
 
 VHDL files are found in /src/
 vunit files are found in /test/
