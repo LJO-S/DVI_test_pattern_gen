@@ -18,7 +18,4 @@ Constraint files are found in HDMI_TPG/constr/
 ```
 
 
-TODO:
--- Short description about 8b/10b. Not the same as IBM's standard! This is totally different.
-
 ![alt text](https://github.com/LJO-S/HDMI_TPG/blob/main/diagram.png)
