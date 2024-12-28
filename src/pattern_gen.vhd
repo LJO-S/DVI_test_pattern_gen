@@ -245,16 +245,16 @@ begin
 
             w_mem_draw <= '1';
 
-            if (w_col_count_div >= 16 and w_col_count_div < 24) then
+            if (w_col_count_div >= 24 and w_col_count_div < 32) then
                 -- T
                 w_mem_symbol_active <= to_unsigned(63, w_mem_symbol_active'length);
             elsif (w_col_count_div >= 32 and w_col_count_div < 40) then
                 -- E
                 w_mem_symbol_active <= to_unsigned(47, w_mem_symbol_active'length);
-            elsif (w_col_count_div >= 48 and w_col_count_div < 56) then
+            elsif (w_col_count_div >= 40 and w_col_count_div < 48) then
                 -- S
                 w_mem_symbol_active <= to_unsigned(31, w_mem_symbol_active'length);
-            elsif (w_col_count_div >= 64 and w_col_count_div < 72) then
+            elsif (w_col_count_div >= 48 and w_col_count_div < 56) then
                 -- T
                 w_mem_symbol_active <= to_unsigned(15, w_mem_symbol_active'length);
             else
